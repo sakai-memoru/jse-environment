@@ -20,11 +20,20 @@ var main = function() {
 
 
 // ---------------------------------------------------------------
+var file_name = "app_GetDate.jse";
+//
+function is_module(this_module_name){
+  // reference : https://senooken.jp/blog/2016/08/20/
+  //             https://gist.github.com/lamsh/f16ee7032051868844fc081926bf0854
+  var isWSH = (typeof(WScript) !== "undefined" && WScript.ScriptName === this_module_name);
+  var isEditor = (typeof(Editor) !== "undefined" && Editor.ExpandParameter('$f') === this_module_name);
+  var isBrowser = (typeof(alert) !== "undefined");
+  return (isWSH || isEditor || isBrowser)
+}
+
 // JScript templates ----------------------
 var objFS = new ActiveXObject("Scripting.FileSystemObject");
-// var script_name = WScript.ScriptName; // FIXME
-var script_name = "app_GetDate.jse";
-var CONS_LOCAL_LIBPATH = '.\\' + objFS.GetBaseName(script_name); 
+var CONS_LOCAL_LIBPATH = '.\\' + objFS.GetBaseName(file_name); 
 var CONS_LOCAL_LIBS = [
  "./setting.js",
  "./Program.js",
@@ -40,19 +49,27 @@ objFS = null;
 
 // execute main ------------------------------------------------
 if(typeof(Editor) !== 'undefined'){
-  process.exit(main());
-} else if(typeof(WScript) !== 'undefined'){
-    //console.info("debug mode: " + CONFIG.DEBUG_MODE);
-    console.log("app name: " + CONFIG.APP_NAME);
-    // console.log(JSON.stringify(exports));
-    // var _ = exports._;
-    // console.log(typeof _);
-    // var Mustache = exports;
-    // console.log(typeof Mustache);
-    // 
+  if (is_module(file_name)){
     process.exit(main());
+    // doDebugForEditor();
+  } 
 } else {
-    console.log('[Warn] Opps! Sorry. This app is for Sakura Ediotr or WSH.');
+  if(typeof(WScript) !== 'undefined'){
+    if (is_module(file_name)){
+      // doDebugForWSH();
+      //console.info("debug mode: " + CONFIG.DEBUG_MODE);
+      console.log("app name: " + CONFIG.APP_NAME);
+      // console.log(JSON.stringify(exports));
+      // var _ = exports._;
+      // console.log(typeof _);
+      // var Mustache = exports;
+      // console.log(typeof Mustache);
+      // 
+      process.exit(main());
+    }
+  } else {
+    console.log('Test on IE11')
+  }
 }
 
 }())
