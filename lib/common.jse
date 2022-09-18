@@ -1,0 +1,220 @@
+/// common.jse
+/// + sakura macro folder
+///    + lib  
+///      + StringUtil.jse
+///      + DateUtil.jse
+///      + Dialog.jse
+///      + File.jse
+///      + FileUtil.jse
+///      + json2.js
+///      + mustache.js
+///      + underscore.js
+///      
+///    + app_temp.jse  
+///    + app_temp  
+///      + setting.js  
+/// 
+
+// const
+var CONS_SAKURA_DIR = 'sakura';
+// 
+var objFs = new ActiveXObject("Scripting.FileSystemObject");
+var objWshell = new ActiveXObject("WScript.Shell");
+var dirname = objWshell.SpecialFolders("AppData");
+var CONS_COMMON_LIBPATH = objFs.BuildPath(dirname, CONS_SAKURA_DIR);
+var CONS_COMMON_LIBS = [
+  "./lib/json2.js",
+  "./lib/DateUtil.jse",
+  "./lib/StringUtil.jse",
+  "./lib/underscore.js",
+  "./lib/mustache.js",
+]
+var CONS_LOCAL_LIBPATH = '.\\app_template'; 
+//var CONS_LOCAL_LIBPATH = '..\\app_template'; // -- When debug
+var CONS_LOCAL_LIBS = [
+  "./setting.js",
+]
+
+// ----------------------------------- local function
+/**
+ * private
+ * @return {string} env_name  :'wsh'|'sakura'|'browser'|'node'
+ */
+var _check_env = function() {
+  // set env_name for targetting wsh, sakura, node
+  var env_name = '';
+  if (typeof(WScript) !== "undefined") env_name = 'wsh';
+  if (typeof(Editor) !== "undefined") env_name = 'sakura';
+  if (typeof(alert) !== "undefined") {
+      env_name = 'browser';
+  } else if (typeof(console) !== "undefined") env_name = 'node';
+  return env_name;
+}
+
+// local utility method
+/**
+ * private
+ * @param {Object} obj
+ * @return {bool}  - whether object is empty or not?
+ */
+var _isEmpty = function(obj) {
+    for(var prop in obj) {
+        if(obj.hasOwnProperty(prop))
+            return false;
+    }
+    return true;
+}
+
+/**
+ * @param {string} flag
+ * @param {bool} debug_mode
+ * @return {Object} console
+ */
+var pretendConsole = function(flag, debug_mode) {
+  // pretend console.log 
+  var console = console || {};
+  if(_isEmpty(console)){
+    if(debug_mode){
+      if(flag == "sakura"){
+        console.log=function(str){
+          var log_str = "[DEBUG] $d$t ($f) > " + str;
+          Editor.TraceOut(log_str,1)
+        }
+        console.info=function(str){
+          var log_str = "[INFO] $d$t ($f) > " + str;
+          Editor.TraceOut(log_str,1)
+        }
+      };
+      if(flag == "wsh"){
+        console.info = function(str){WScript.Echo('[INFO] ' + str)};
+        console.log = function(str){WScript.Echo('[DEBUG] ' + str)};
+      }
+    }else{
+      if(flag == "wsh")  console.info = function(str){WScript.Echo(str)};
+      if(flag == "sakura")  console.info =function(str){Editor.InfoMsg(str)};
+      if(flag == "wsh")  console.log = function(str){null;};
+      if(flag == "sakura")  console.log = function(str){null;};
+    }
+  }
+  return console;
+}
+
+
+/**
+ * public
+ * @param {string} flag
+ * @param {bool} debug_mode
+ * @return {Object} process
+ */
+var pretendProcess = function(flag, debug_mode){
+  // pretend process.exit
+  var process = process || {};
+  if(_isEmpty(process)){
+    if(flag == "wsh")  process={exit : function(e){WScript.Quit(e)}};
+    if(debug_mode){
+      if(flag == "sakura")  process={exit : function(e){Editor.TraceOut('done')}};
+    }else{
+      if(flag == "sakura")  process={exit : function(e){'done'}};
+    }
+  }
+  return process;
+}
+
+// ----------------------------------- doMain
+// variables
+var flag = _check_env();
+var CONFIG = {};
+var exports = {};
+
+// load external libraries
+if(flag == "wsh"||flag == "sakura"){
+  var objFS = new ActiveXObject("Scripting.FileSystemObject");
+  var lib_path = CONS_COMMON_LIBPATH ? CONS_COMMON_LIBPATH: './';
+  var llib_path = CONS_LOCAL_LIBPATH ? CONS_LOCAL_LIBPATH: './';
+  // require common module
+  with({
+    libs : CONS_COMMON_LIBS, 
+    llibs : CONS_LOCAL_LIBS,
+    get_moduleCode : function(path){
+      return objFS.OpenTextFile(path,1).ReadAll();
+    }
+  }) {
+    var len = libs.length;
+    for (var i = 0; i < len; i++){
+      try {
+        var module_path = objFS.BuildPath(lib_path,libs[i]);
+        eval(get_moduleCode(module_path));
+      } catch (e) {
+        //console.log( e.description || e.message || "error" );
+        null;
+      }
+    }
+    var llen = llibs.length;
+    for (var i = 0; i < llen; i++){
+      try {
+        var module_path = objFS.BuildPath(llib_path,llibs[i]);
+        eval(get_moduleCode(module_path));
+      } catch (e) {
+        //console.log( e.description || e.message || "error" );
+        null;
+      }
+    }
+  };
+  objFS = null;
+}
+
+var debug_mode = CONFIG.DEBUG_MODE;
+var console = console || pretendConsole(flag, debug_mode);
+var process = process || pretendProcess(flag, debug_mode);
+
+// ------------------------------------------------ doMain - for debug
+/**
+ * doMain
+ * @param {string} str
+ * @return {int} ret
+ */
+var doProcess = function(str){
+  // --------------------- begin.
+  // 
+  console.info("// ------------------ begin.");
+  var ret = 0;
+  var _ = exports._
+  var obj = {};
+  obj = {
+    "name": str,
+    "address": "123 " + str + " street"
+  }
+  // --------------------- process.
+  console.log(obj.name);
+  console.log(obj["address"]);
+  _.each(obj, function(val, key) {
+    console.log(key + " : " + val);
+  });
+  
+  // --------------------- end...
+  console.info("// ------------------ end...");
+  return ret;
+};
+
+// ------------------------------------------------ entry point
+var doProcessMain = function() {
+  console.info("// -------------------------------- main.");
+  console.info("env: " + flag);
+  console.info("debug_mode: " + debug_mode)
+  console.info(JSON.stringify(exports));
+  // 
+  var name = "JScript";
+  doProcess(name);
+  console.info("// -------------------------------- main end.");
+}
+
+// ------------------------------------------------ execute main process
+// 
+// if(typeof(Editor) !== 'undefined'){
+//   process.exit(doProcessMain());
+//   
+// } else if(typeof(WScript) !== 'undefined'){
+//     process.exit(doProcessMain());
+// } else {
+//     console.log('[Warn] Opps! Sorry. This app is for Sakura Ediotr or WSH.');
+// }
