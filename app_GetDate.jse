@@ -1,0 +1,71 @@
+// app_template.jse
+//    + app_template.jse  
+//    + app_template  
+//      + setting.js  
+// 
+(function(){
+
+// ------------------------------------------------ doMain
+/**
+ * doMain
+ * @param {string} str
+ * @return {int} ret
+ */
+var doMain = function(str){
+  // --------------------- begin.
+  console.info("// ------------------ begin.");
+  var ret = 0;
+  var _ = exports._
+  var DateUtil = exports.DateUtil;
+  // --------------------- process.
+  var dtm = new Date();
+  var format = 'yyyy/MM/dd(ddd)hh:mm';
+  var formatted = DateUtil.format_date(dtm, format);  
+  console.log(formatted);
+  // --------------------- end...
+  console.info("// ------------------ end...");
+  return ret;
+};
+
+// ------------------------------------------------ entry point
+// 
+var main = function() {
+  console.info("// -------------------------------- main....");
+  //console.info("debug mode: " + CONFIG.DEBUG_MODE);
+  console.log("app name: " + CONFIG.APP_NAME);
+  // console.log(JSON.stringify(exports));
+  // var _ = exports._;
+  // console.log(typeof _);
+  // var Mustache = exports;
+  // console.log(typeof Mustache);
+  // 
+  var name = "JScript";
+  doMain(name)
+  console.info("// -------------------------------- end main.");
+}
+
+// JScript templates ----------------------
+var CONS_LOCAL_LIBPATH = '.\\app_GetDate'; 
+var CONS_LOCAL_LIBS = [
+ "./setting.js",
+]
+
+// import common.jse
+var objFS = new ActiveXObject("Scripting.FileSystemObject");
+var CONS_COMMON_JS = './lib/common.jse';
+var common_js_path = objFS.BuildPath(".\\", CONS_COMMON_JS);
+var common_src = objFS.OpenTextFile(common_js_path,1).ReadAll();
+eval(common_src);
+//
+objFS = null;
+
+// execute main ------------------------------------------------
+if(typeof(Editor) !== 'undefined'){
+  process.exit(main());
+} else if(typeof(WScript) !== 'undefined'){
+    process.exit(main());
+} else {
+    console.log('[Warn] Opps! Sorry. This app is for Sakura Ediotr or WSH.');
+}
+
+}())

@@ -29,11 +29,10 @@ var CONS_COMMON_LIBS = [
   "./lib/underscore.js",
   "./lib/mustache.js",
 ]
-var CONS_LOCAL_LIBPATH = '.\\app_template'; 
-//var CONS_LOCAL_LIBPATH = '..\\app_template'; // -- When debug
-var CONS_LOCAL_LIBS = [
-  "./setting.js",
-]
+// var CONS_LOCAL_LIBPATH = '.\\lib'; 
+// var CONS_LOCAL_LIBS = [
+//  "./setting.js",
+// ]
 
 // ----------------------------------- local function
 /**
